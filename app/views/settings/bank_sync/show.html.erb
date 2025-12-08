@@ -1,26 +1,55 @@
 <%= content_for :page_title, "Bank Sync" %>
 
-<div class="bg-container rounded-xl shadow-border-xs p-4">
-  <% if @providers.any? %>
-    <div class="rounded-xl bg-container-inset space-y-1 p-1">
-      <div class="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-secondary uppercase">
-        <p>PROVIDERS</p>
-        <span class="text-subdued">&middot;</span>
-        <p><%= @providers.count %></p>
-      </div>
+<div class="space-y-4">
+  <%# Bundled with Sure providers %>
+  <div class="bg-container rounded-xl shadow-border-xs p-4">
+    <% if @bundled_providers.any? %>
+      <div class="rounded-xl bg-container-inset space-y-1 p-1">
+        <div class="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-secondary uppercase">
+          <p>BUNDLED WITH SURE</p>
+          <span class="text-subdued">&middot;</span>
+          <p><%= @bundled_providers.count %></p>
+        </div>
 
-      <div class="bg-container rounded-lg shadow-border-xs">
-        <div class="overflow-hidden rounded-lg">
-          <%= render partial: "provider_link", collection: @providers, spacer_template: "shared/ruler" %>
+        <div class="bg-container rounded-lg shadow-border-xs">
+          <div class="overflow-hidden rounded-lg">
+            <%= render partial: "provider_link", collection: @bundled_providers, spacer_template: "shared/ruler" %>
+          </div>
         </div>
       </div>
-    </div>
-  <% else %>
-    <div class="flex justify-center items-center py-20">
-      <div class="text-center flex flex-col items-center max-w-[300px]">
-        <p class="text-primary mb-1 font-medium text-sm">No providers configured</p>
-        <p class="text-secondary text-sm">Configure providers to link your bank accounts.</p>
+    <% else %>
+      <div class="flex justify-center items-center py-20">
+        <div class="text-center flex flex-col items-center max-w-[300px]">
+          <p class="text-primary mb-1 font-medium text-sm">No bundled providers configured</p>
+          <p class="text-secondary text-sm">Bundled providers are included with your Sure subscription.</p>
+        </div>
       </div>
-    </div>
-  <% end %>
+    <% end %>
+  </div>
+
+  <%# BYOKey - Bring Your Own Key providers %>
+  <div class="bg-container rounded-xl shadow-border-xs p-4">
+    <% if @byokey_providers.any? %>
+      <div class="rounded-xl bg-container-inset space-y-1 p-1">
+        <div class="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-secondary uppercase">
+          <p>BYOKEY - BRING YOUR OWN KEY</p>
+          <span class="text-subdued">&middot;</span>
+          <p><%= @byokey_providers.count %></p>
+        </div>
+
+        <div class="bg-container rounded-lg shadow-border-xs">
+          <div class="overflow-hidden rounded-lg">
+            <%= render partial: "provider_link", collection: @byokey_providers, spacer_template: "shared/ruler" %>
+          </div>
+        </div>
+      </div>
+    <% else %>
+      <div class="flex justify-center items-center py-20">
+        <div class="text-center flex flex-col items-center max-w-[300px]">
+          <p class="text-primary mb-1 font-medium text-sm">No BYOKey providers configured</p>
+          <p class="text-secondary text-sm">BYOKey providers require your own API keys to connect bank accounts.</p>
+        </div>
+      </div>
+    <% end %>
+  </div>
 </div>
