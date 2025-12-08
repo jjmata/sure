@@ -38,8 +38,12 @@ class Settings::BankSyncController < ApplicationController
       }
     ]
 
-    # Separate providers by sync method
-    @byokey_providers = all_providers.select { |p| p[:sync_methods].include?(:byokey) }
-    @bundled_providers = all_providers.select { |p| p[:sync_methods].include?(:bundled) }
+    # In self-hosted mode, show simple list; in hosted mode, separate by sync method
+    if self_hosted?
+      @providers = all_providers
+    else
+      @byokey_providers = all_providers.select { |p| p[:sync_methods].include?(:byokey) }
+      @bundled_providers = all_providers.select { |p| p[:sync_methods].include?(:bundled) }
+    end
   end
 end

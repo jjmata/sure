@@ -10,13 +10,16 @@ class Settings::BankSyncControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "should separate providers into BYOKey and bundled categories" do
+  test "in hosted mode should separate providers into BYOKey and bundled categories" do
+    Rails.application.config.app_mode.stubs(:self_hosted?).returns(false)
+
     get settings_bank_sync_path
     assert_response :success
 
     # Check that both categories are assigned
     assert_not_nil assigns(:byokey_providers)
     assert_not_nil assigns(:bundled_providers)
+    assert_nil assigns(:providers)
 
     # BYOKey providers should include all four providers (SimpleFIN, Plaid, Enable Banking, Lunch Flow)
     assert_equal 4, assigns(:byokey_providers).length
@@ -31,7 +34,29 @@ class Settings::BankSyncControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Lunch Flow", assigns(:bundled_providers).first[:name]
   end
 
+  test "in self-hosted mode should show all providers in single list" do
+    Rails.application.config.app_mode.stubs(:self_hosted?).returns(true)
+
+    get settings_bank_sync_path
+    assert_response :success
+
+    # Check that simple provider list is assigned
+    assert_not_nil assigns(:providers)
+    assert_nil assigns(:byokey_providers)
+    assert_nil assigns(:bundled_providers)
+
+    # All four providers should be in the list
+    assert_equal 4, assigns(:providers).length
+    provider_names = assigns(:providers).map { |p| p[:name] }
+    assert_includes provider_names, "SimpleFIN"
+    assert_includes provider_names, "Plaid"
+    assert_includes provider_names, "Enable Banking (beta)"
+    assert_includes provider_names, "Lunch Flow"
+  end
+
   test "each provider should have sync_methods metadata" do
+    Rails.application.config.app_mode.stubs(:self_hosted?).returns(false)
+
     get settings_bank_sync_path
     assert_response :success
 
