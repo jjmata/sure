@@ -17,17 +17,23 @@ class Settings::BankSyncController < ApplicationController
   private
     def load_providers
       config_path = Rails.root.join("config", "sync-providers.yml")
-      config = YAML.load_file(config_path)
       
-      config["providers"].map do |provider|
-        {
-          name: provider["name"],
-          description: provider["description"],
-          path: provider["path"],
-          target: provider["target"],
-          rel: provider["rel"],
-          sync_methods: provider["sync_methods"].map(&:to_sym)
-        }
+      begin
+        config = YAML.safe_load_file(config_path)
+        
+        config["providers"].map do |provider|
+          {
+            name: provider["name"],
+            description: provider["description"],
+            path: provider["path"],
+            target: provider["target"],
+            rel: provider["rel"],
+            sync_methods: provider["sync_methods"].map(&:to_sym)
+          }
+        end
+      rescue Errno::ENOENT, Psych::SyntaxError => e
+        Rails.logger.error("Failed to load sync providers config: #{e.message}")
+        []
       end
     end
 end

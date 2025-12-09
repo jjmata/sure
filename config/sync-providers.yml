@@ -1,3 +1,7 @@
+# Bank sync provider configuration
+# Each provider supports one or more sync methods:
+#   - bundled: Provider is included with Sure subscription
+#   - byokey: Provider requires user to bring their own API key
 providers:
   - name: "Lunch Flow"
     description: "US, Canada, UK, EU, Brazil and Asia through multiple open banking providers."
