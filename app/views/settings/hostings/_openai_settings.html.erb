@@ -1,12 +1,25 @@
 <div class="space-y-4">
   <div>
     <h2 class="font-medium mb-1"><%= t(".title") %></h2>
-    <% if ENV["OPENAI_ACCESS_TOKEN"].present? %>
-      <p class="text-sm text-secondary"><%= t(".env_configured_message") %></p>
+    <% if ENV["OPENAI_ACCESS_TOKEN"].present? && Current.family.openai_access_token.blank? %>
+      <p class="text-sm text-secondary"><%= t(".env_configured_message") %> <%= t(".override_description") %></p>
     <% else %>
       <p class="text-secondary text-sm mb-4"><%= t(".description") %></p>
     <% end %>
   </div>
+
+  <%
+    # Use family-level settings if set, otherwise fall back to global/ENV settings
+    family_token = Current.family.openai_access_token
+    family_uri_base = Current.family.openai_uri_base
+    family_model = Current.family.openai_model
+    family_json_mode = Current.family.openai_json_mode
+
+    effective_token = family_token.presence || Setting.openai_access_token
+    effective_uri_base = family_uri_base.presence || Setting.openai_uri_base
+    effective_model = family_model.presence || Setting.openai_model
+    effective_json_mode = family_json_mode.presence || Setting.openai_json_mode
+  %>
 
   <%= styled_form_with model: Setting.new,
                        url: settings_hosting_path,
@@ -19,34 +32,31 @@
   <%= form.password_field :openai_access_token,
                           label: t(".access_token_label"),
                           placeholder: t(".access_token_placeholder"),
-                          value: (Setting.openai_access_token.present? ? "********" : nil),
+                          value: (effective_token.present? ? "********" : nil),
                           autocomplete: "off",
                           autocapitalize: "none",
                           spellcheck: "false",
                           inputmode: "text",
-                          disabled: ENV["OPENAI_ACCESS_TOKEN"].present?,
                           data: { "auto-submit-form-target": "auto" } %>
 
   <%= form.text_field :openai_uri_base,
                       label: t(".uri_base_label"),
                       placeholder: t(".uri_base_placeholder"),
-                      value: Setting.openai_uri_base,
+                      value: effective_uri_base,
                       autocomplete: "off",
                       autocapitalize: "none",
                       spellcheck: "false",
                       inputmode: "url",
-                      disabled: ENV["OPENAI_URI_BASE"].present?,
                       data: { "auto-submit-form-target": "auto" } %>
 
   <%= form.text_field :openai_model,
                       label: t(".model_label"),
                       placeholder: t(".model_placeholder"),
-                      value: Setting.openai_model,
+                      value: effective_model,
                       autocomplete: "off",
                       autocapitalize: "none",
                       spellcheck: "false",
                       inputmode: "text",
-                      disabled: ENV["OPENAI_MODEL"].present?,
                       data: { "auto-submit-form-target": "auto" } %>
 
   <%= form.select :openai_json_mode,
@@ -57,11 +67,10 @@
                       [t(".json_mode_none"), "none"],
                       [t(".json_mode_json_object"), "json_object"]
                     ],
-                    Setting.openai_json_mode
+                    effective_json_mode
                   ),
                   { label: t(".json_mode_label") },
-                  { disabled: ENV["LLM_JSON_MODE"].present?,
-                    data: { "auto-submit-form-target": "auto" } } %>
+                  { data: { "auto-submit-form-target": "auto" } } %>
   <p class="text-xs text-secondary mt-1"><%= t(".json_mode_help") %></p>
   <% end %>
 </div>

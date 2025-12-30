@@ -12,8 +12,12 @@ class Provider::Registry
       new(concept.to_sym)
     end
 
-    def get_provider(name)
-      send(name)
+    def get_provider(name, family: nil)
+      if name.to_sym == :openai
+        openai(family: family)
+      else
+        send(name)
+      end
     rescue NoMethodError
       raise Error.new("Provider '#{name}' not found in registry")
     end
@@ -62,13 +66,21 @@ class Provider::Registry
         Provider::Github.new
       end
 
-      def openai
-        access_token = ENV["OPENAI_ACCESS_TOKEN"].presence || Setting.openai_access_token
+      def openai(family: nil)
+        # Priority: Family settings > ENV > Global Setting
+        access_token = family&.openai_access_token.presence ||
+                       ENV["OPENAI_ACCESS_TOKEN"].presence ||
+                       Setting.openai_access_token
 
         return nil unless access_token.present?
 
-        uri_base = ENV["OPENAI_URI_BASE"].presence || Setting.openai_uri_base
-        model = ENV["OPENAI_MODEL"].presence || Setting.openai_model
+        uri_base = family&.openai_uri_base.presence ||
+                   ENV["OPENAI_URI_BASE"].presence ||
+                   Setting.openai_uri_base
+
+        model = family&.openai_model.presence ||
+                ENV["OPENAI_MODEL"].presence ||
+                Setting.openai_model
 
         if uri_base.present? && model.blank?
           Rails.logger.error("Custom OpenAI provider configured without a model; please set OPENAI_MODEL or Setting.openai_model")

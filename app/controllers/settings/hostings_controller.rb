@@ -58,33 +58,37 @@ class Settings::HostingsController < ApplicationController
       Setting.securities_provider = hosting_params[:securities_provider]
     end
 
+    # OpenAI settings are saved at the family level to allow overriding ENV settings
     if hosting_params.key?(:openai_access_token)
       token_param = hosting_params[:openai_access_token].to_s.strip
       # Ignore blanks and redaction placeholders to prevent accidental overwrite
       unless token_param.blank? || token_param == "********"
-        Setting.openai_access_token = token_param
+        Current.family.openai_access_token = token_param
       end
     end
 
     # Validate OpenAI configuration before updating
     if hosting_params.key?(:openai_uri_base) || hosting_params.key?(:openai_model)
-      Setting.validate_openai_config!(
+      validate_openai_config!(
         uri_base: hosting_params[:openai_uri_base],
         model: hosting_params[:openai_model]
       )
     end
 
     if hosting_params.key?(:openai_uri_base)
-      Setting.openai_uri_base = hosting_params[:openai_uri_base]
+      Current.family.openai_uri_base = hosting_params[:openai_uri_base]
     end
 
     if hosting_params.key?(:openai_model)
-      Setting.openai_model = hosting_params[:openai_model]
+      Current.family.openai_model = hosting_params[:openai_model]
     end
 
     if hosting_params.key?(:openai_json_mode)
-      Setting.openai_json_mode = hosting_params[:openai_json_mode].presence
+      Current.family.openai_json_mode = hosting_params[:openai_json_mode].presence
     end
+
+    # Save family changes
+    Current.family.save! if Current.family.changed?
 
     redirect_to settings_hosting_path, notice: t(".success")
   rescue Setting::ValidationError => error
@@ -104,5 +108,16 @@ class Settings::HostingsController < ApplicationController
 
     def ensure_admin
       redirect_to settings_hosting_path, alert: t(".not_authorized") unless Current.user.admin?
+    end
+
+    # Validates that a model is provided when a custom URI base is set
+    def validate_openai_config!(uri_base: nil, model: nil)
+      # Use provided values or current family settings, falling back to global/ENV
+      uri_base_value = uri_base.nil? ? (Current.family.openai_uri_base.presence || Setting.openai_uri_base) : uri_base
+      model_value = model.nil? ? (Current.family.openai_model.presence || Setting.openai_model) : model
+
+      if uri_base_value.present? && model_value.blank?
+        raise Setting::ValidationError, "OpenAI model is required when custom URI base is configured"
+      end
     end
 end

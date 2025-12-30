@@ -42,6 +42,7 @@ en:
       openai_settings:
         description: Enter the access token and optionally configure a custom OpenAI-compatible provider
         env_configured_message: Successfully configured through environment variables.
+        override_description: You can override these settings below.
         access_token_label: Access Token
         access_token_placeholder: Enter your access token here
         uri_base_label: API Base URL (Optional)

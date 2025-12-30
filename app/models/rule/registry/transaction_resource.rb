@@ -33,6 +33,6 @@ class Rule::Registry::TransactionResource < Rule::Registry
 
   private
     def ai_enabled?
-      Provider::Registry.get_provider(:openai).present?
+      Provider::Registry.get_provider(:openai, family: family).present?
     end
 end

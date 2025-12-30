@@ -60,7 +60,7 @@ class Family::AutoCategorizer
 
     # For now, OpenAI only, but this should work with any LLM concept provider
     def llm_provider
-      Provider::Registry.get_provider(:openai)
+      Provider::Registry.get_provider(:openai, family: family)
     end
 
     def user_categories_input

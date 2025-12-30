@@ -94,7 +94,7 @@ module ApplicationHelper
   def default_ai_model
     # Always return a valid model, never nil or empty
     # Delegates to Chat.default_model for consistency
-    Chat.default_model
+    Chat.default_model(family: Current.family)
   end
 
   # Renders Markdown text using Redcarpet

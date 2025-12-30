@@ -66,51 +66,59 @@ class Settings::HostingsControllerTest < ActionDispatch::IntegrationTest
 
   test "can update openai access token when self hosting is enabled" do
     with_self_hosting do
+      family = users(:family_admin).family
+
       patch settings_hosting_url, params: { setting: { openai_access_token: "token" } }
 
-      assert_equal "token", Setting.openai_access_token
+      assert_equal "token", family.reload.openai_access_token
     end
   end
 
   test "can update openai uri base and model together when self hosting is enabled" do
     with_self_hosting do
+      family = users(:family_admin).family
+
       patch settings_hosting_url, params: { setting: { openai_uri_base: "https://api.example.com/v1", openai_model: "gpt-4" } }
 
-      assert_equal "https://api.example.com/v1", Setting.openai_uri_base
-      assert_equal "gpt-4", Setting.openai_model
+      family.reload
+      assert_equal "https://api.example.com/v1", family.openai_uri_base
+      assert_equal "gpt-4", family.openai_model
     end
   end
 
   test "cannot update openai uri base without model when self hosting is enabled" do
     with_self_hosting do
-      Setting.openai_model = ""
+      family = users(:family_admin).family
+      family.update!(openai_model: nil)
 
       patch settings_hosting_url, params: { setting: { openai_uri_base: "https://api.example.com/v1" } }
 
       assert_response :unprocessable_entity
       assert_match(/OpenAI model is required/, flash[:alert])
-      assert_nil Setting.openai_uri_base
+      assert_nil family.reload.openai_uri_base
     end
   end
 
   test "can update openai model alone when self hosting is enabled" do
     with_self_hosting do
+      family = users(:family_admin).family
+
       patch settings_hosting_url, params: { setting: { openai_model: "gpt-4" } }
 
-      assert_equal "gpt-4", Setting.openai_model
+      assert_equal "gpt-4", family.reload.openai_model
     end
   end
 
   test "cannot clear openai model when custom uri base is set" do
     with_self_hosting do
-      Setting.openai_uri_base = "https://api.example.com/v1"
-      Setting.openai_model = "gpt-4"
+      family = users(:family_admin).family
+      family.update!(openai_uri_base: "https://api.example.com/v1", openai_model: "gpt-4")
 
       patch settings_hosting_url, params: { setting: { openai_model: "" } }
 
       assert_response :unprocessable_entity
       assert_match(/OpenAI model is required/, flash[:alert])
-      assert_equal "gpt-4", Setting.openai_model
+      assert_equal "gpt-4", family.reload.openai_model
     end
   end
 

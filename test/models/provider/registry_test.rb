@@ -64,4 +64,44 @@ class Provider::RegistryTest < ActiveSupport::TestCase
       assert_instance_of Provider::Openai, provider
     end
   end
+
+  test "openai provider uses family settings over ENV" do
+    # Test that family-level settings take priority over ENV
+    ClimateControl.modify(
+      "OPENAI_ACCESS_TOKEN" => "env-token",
+      "OPENAI_URI_BASE" => "",
+      "OPENAI_MODEL" => ""
+    ) do
+      family = families(:dylan_family)
+      family.stubs(:openai_access_token).returns("family-token")
+      family.stubs(:openai_uri_base).returns(nil)
+      family.stubs(:openai_model).returns(nil)
+
+      provider = Provider::Registry.get_provider(:openai, family: family)
+
+      # Should successfully create provider using family value
+      assert_not_nil provider
+      assert_instance_of Provider::Openai, provider
+    end
+  end
+
+  test "openai provider falls back to ENV when family settings are nil" do
+    # Test that ENV is used when family settings are not set
+    ClimateControl.modify(
+      "OPENAI_ACCESS_TOKEN" => "env-token",
+      "OPENAI_URI_BASE" => "",
+      "OPENAI_MODEL" => ""
+    ) do
+      family = families(:dylan_family)
+      family.stubs(:openai_access_token).returns(nil)
+      family.stubs(:openai_uri_base).returns(nil)
+      family.stubs(:openai_model).returns(nil)
+
+      provider = Provider::Registry.get_provider(:openai, family: family)
+
+      # Should successfully create provider using ENV value
+      assert_not_nil provider
+      assert_instance_of Provider::Openai, provider
+    end
+  end
 end

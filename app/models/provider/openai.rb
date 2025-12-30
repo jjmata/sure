@@ -10,8 +10,11 @@ class Provider::Openai < Provider
 
   # Returns the effective model that would be used by the provider
   # Uses the same logic as Provider::Registry and the initializer
-  def self.effective_model
-    configured_model = ENV.fetch("OPENAI_MODEL", Setting.openai_model)
+  # Priority: Family settings > ENV > Global Setting > DEFAULT_MODEL
+  def self.effective_model(family: nil)
+    configured_model = family&.openai_model.presence ||
+                       ENV["OPENAI_MODEL"].presence ||
+                       Setting.openai_model
     configured_model.presence || DEFAULT_MODEL
   end
 
