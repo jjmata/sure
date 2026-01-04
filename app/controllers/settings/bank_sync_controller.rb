@@ -2,35 +2,41 @@ class Settings::BankSyncController < ApplicationController
   layout "settings"
 
   def show
-    @providers = [
-      {
-        name: "Lunch Flow",
-        description: "US, Canada, UK, EU, Brazil and Asia through multiple open banking providers.",
-        path: "https://lunchflow.app/features/sure-integration",
-        target: "_blank",
-        rel: "noopener noreferrer"
-      },
-      {
-        name: "Plaid",
-        description: "US & Canada bank connections with transactions, investments, and liabilities.",
-        path: "https://github.com/we-promise/sure/blob/main/docs/hosting/plaid.md",
-        target: "_blank",
-        rel: "noopener noreferrer"
-      },
-      {
-        name: "SimpleFIN",
-        description: "US & Canada connections via SimpleFIN protocol.",
-        path: "https://beta-bridge.simplefin.org",
-        target: "_blank",
-        rel: "noopener noreferrer"
-      },
-      {
-        name: "Enable Banking (beta)",
-        description: "European bank connections via open banking APIs across multiple countries.",
-        path: "https://enablebanking.com",
-        target: "_blank",
-        rel: "noopener noreferrer"
-      }
-    ]
+    # Load providers from configuration file
+    all_providers = load_providers
+
+    # In self-hosted mode, show simple list; in hosted mode, separate by sync method
+    if self_hosted?
+      @providers = all_providers
+    else
+      @byokey_providers = all_providers.select { |p| p[:sync_methods].include?(:byokey) }
+      @bundled_providers = all_providers.select { |p| p[:sync_methods].include?(:bundled) }
+    end
   end
+
+  private
+    def load_providers
+      config_path = Rails.root.join("config", "sync-providers.yml")
+      
+      begin
+        config = YAML.safe_load_file(config_path)
+        providers = config&.dig("providers")
+        
+        return [] unless providers.is_a?(Array)
+        
+        providers.map do |provider|
+          {
+            name: provider["name"],
+            description: provider["description"],
+            path: provider["path"],
+            target: provider["target"],
+            rel: provider["rel"],
+            sync_methods: provider["sync_methods"]&.map(&:to_sym) || []
+          }
+        end
+      rescue Errno::ENOENT, Psych::SyntaxError, NoMethodError, TypeError => e
+        Rails.logger.error("Failed to load sync providers config: #{e.message}")
+        []
+      end
+    end
 end
