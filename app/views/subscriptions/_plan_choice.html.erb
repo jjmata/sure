@@ -1,6 +1,6 @@
 <%# locals: (plan:, form:, checked: false) %>
 
-<% price = plan == "annual" ? 90 : 9 %>
+<% price = plan == "annual" ? (ENV.fetch("STRIPE_ANNUAL_PRICE", 90).to_f) : (ENV.fetch("STRIPE_MONTHLY_PRICE", 9).to_f) %>
 <% frequency = plan == "annual" ? "/year" : "/month" %>
 
 <div class="relative">
