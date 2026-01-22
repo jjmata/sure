@@ -412,8 +412,8 @@ Rails.application.routes.draw do
 
   get "imports/:import_id/upload/sample_csv", to: "import/uploads#sample_csv", as: :import_upload_sample_csv
 
-  get "privacy", to: redirect("about:blank")
-  get "terms", to: redirect("about:blank")
+  get "privacy", to: redirect(ENV.fetch("LEGAL_PRIVACY_URL", "/privacy.html"), status: 302)
+  get "terms", to: redirect(ENV.fetch("LEGAL_TERMS_URL", "/terms.html"), status: 302)
 
   # Admin namespace for super admin functionality
   namespace :admin do
