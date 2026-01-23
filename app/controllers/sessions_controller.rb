@@ -51,6 +51,8 @@ class SessionsController < ApplicationController
     end
 
     if user
+      reset_demo_locale_for(user)
+
       if user.otp_required?
         log_super_admin_override_login(user)
         session[:mfa_user_id] = user.id
@@ -129,6 +131,8 @@ class SessionsController < ApplicationController
       # Log successful SSO login
       SsoAuditLog.log_login!(user: user, provider: auth.provider, request: request)
 
+      reset_demo_locale_for(user)
+
       # MFA check: If user has MFA enabled, require verification
       if user.otp_required?
         session[:mfa_user_id] = user.id
@@ -195,6 +199,15 @@ class SessionsController < ApplicationController
       return false unless demo.present? && demo["hosts"].present?
 
       demo["hosts"].include?(request.host)
+    end
+
+    def reset_demo_locale_for(user)
+      demo = demo_config
+      return unless demo_host_match?(demo)
+      return unless user&.email == demo["email"]
+      return unless user.family
+
+      user.family.update(locale: "en") if user.family.locale != "en"
     end
 
     def build_idp_logout_url(oidc_identity, id_token)
