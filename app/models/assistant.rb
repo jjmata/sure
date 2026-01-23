@@ -1,19 +1,25 @@
 class Assistant
   include Provided, Configurable, Broadcastable
 
-  attr_reader :chat, :instructions
+  attr_reader :chat, :instructions, :prompt_metadata
 
   class << self
     def for_chat(chat)
       config = config_for(chat)
-      new(chat, instructions: config[:instructions], functions: config[:functions])
+      new(
+        chat,
+        instructions: config[:instructions],
+        functions: config[:functions],
+        prompt_metadata: config[:prompt_metadata]
+      )
     end
   end
 
-  def initialize(chat, instructions: nil, functions: [])
+  def initialize(chat, instructions: nil, functions: [], prompt_metadata: nil)
     @chat = chat
     @instructions = instructions
     @functions = functions
+    @prompt_metadata = prompt_metadata || {}
   end
 
   def respond_to(message)
@@ -34,7 +40,8 @@ class Assistant
       message: message,
       instructions: instructions,
       function_tool_caller: function_tool_caller,
-      llm: llm_provider
+      llm: llm_provider,
+      prompt_metadata: prompt_metadata
     )
 
     latest_response_id = chat.latest_assistant_response_id

@@ -1,18 +1,54 @@
 module Assistant::Configurable
   extend ActiveSupport::Concern
+  include LangfusePrompt
 
   class_methods do
     def config_for(chat)
       preferred_currency = Money::Currency.new(chat.user.family.currency)
       preferred_date_format = chat.user.family.date_format
 
+      prompt_result = fetch_instructions(preferred_currency, preferred_date_format)
+
       {
-        instructions: default_instructions(preferred_currency, preferred_date_format),
-        functions: default_functions
+        instructions: prompt_result.content,
+        functions: default_functions,
+        prompt_metadata: {
+          name: prompt_result.name,
+          version: prompt_result.version,
+          from_langfuse: prompt_result.from_langfuse?
+        }
       }
     end
 
     private
+      def fetch_instructions(preferred_currency, preferred_date_format)
+        # Try to fetch from Langfuse first
+        langfuse_result = fetch_langfuse_prompt(variables: {
+          preferred_currency_symbol: preferred_currency.symbol,
+          preferred_currency_iso_code: preferred_currency.iso_code,
+          preferred_currency_default_precision: preferred_currency.default_precision,
+          preferred_currency_default_format: preferred_currency.default_format,
+          preferred_currency_separator: preferred_currency.separator,
+          preferred_currency_delimiter: preferred_currency.delimiter,
+          preferred_date_format: preferred_date_format,
+          current_date: Date.current.to_s
+        })
+
+        if langfuse_result
+          Rails.logger.info("[Assistant] Using Langfuse prompt '#{langfuse_result.name}' version #{langfuse_result.version}")
+          langfuse_result
+        else
+          # Fall back to hardcoded instructions
+          Rails.logger.info("[Assistant] Using hardcoded default_instructions")
+          LangfusePrompt::PromptResult.new(
+            content: default_instructions(preferred_currency, preferred_date_format),
+            name: nil,
+            version: nil,
+            from_langfuse?: false
+          )
+        end
+      end
+
       def default_functions
         [
           Assistant::Function::GetTransactions,
