@@ -61,6 +61,10 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
+    setup do
+      force_test_locale
+    end
+
     # Add more helper methods to be used by all tests here...
     def sign_in(user)
       post sessions_path, params: { email: user.email, password: user_password_test }
@@ -73,6 +77,13 @@ module ActiveSupport
     def with_self_hosting
       Rails.configuration.stubs(:app_mode).returns("self_hosted".inquiry)
       yield
+    end
+
+    def force_test_locale
+      return if ENV["TEST_UI_LOCALE"].blank?
+
+      locale = ENV["TEST_UI_LOCALE"].to_sym
+      I18n.locale = locale if I18n.available_locales.include?(locale)
     end
 
     def user_password_test
