@@ -60,6 +60,7 @@ gem "countries"
 # OAuth & API Security
 gem "doorkeeper"
 gem "rack-attack", "~> 6.6"
+gem "rack-cors"
 gem "pundit"
 gem "faraday"
 gem "faraday-retry"
@@ -74,12 +75,14 @@ gem "rchardet" # Character encoding detection
 gem "redcarpet"
 gem "stripe"
 gem "plaid"
+gem "snaptrade", "~> 2.0"
 gem "httparty"
 gem "rotp", "~> 6.3"
 gem "rqrcode", "~> 3.0"
 gem "activerecord-import"
 gem "rubyzip", "~> 2.3"
 gem "geocoder"
+gem "pdf-reader", "~> 2.12"
 
 # OpenID Connect, OAuth & SAML authentication
 gem "omniauth", "~> 2.1"
@@ -92,10 +95,6 @@ gem "omniauth-saml", "~> 2.1"
 # State machines
 gem "aasm"
 gem "after_commit_everywhere", "~> 1.0"
-
-# Feature flags
-gem "flipper"
-gem "flipper-active_record"
 
 # AI
 gem "ruby-openai"
