@@ -1,3 +1,6 @@
+require "net/http"
+require "stringio"
+
 class OidcIdentity < ApplicationRecord
   belongs_to :user
 
@@ -30,6 +33,8 @@ class OidcIdentity < ApplicationRecord
       first_name: auth.info&.first_name.presence || user.first_name,
       last_name: auth.info&.last_name.presence || user.last_name
     )
+
+    sync_profile_image_from_auth(auth)
 
     # Apply role mapping based on group membership
     apply_role_mapping!(groups)
@@ -78,7 +83,7 @@ class OidcIdentity < ApplicationRecord
     # Extract issuer from OIDC auth response if available
     issuer = auth.extra&.raw_info&.iss || auth.extra&.raw_info&.[]("iss")
 
-    create!(
+    identity = create!(
       user: user,
       provider: auth.provider,
       uid: auth.uid,
@@ -91,6 +96,9 @@ class OidcIdentity < ApplicationRecord
       },
       last_authenticated_at: Time.current
     )
+
+    identity.sync_profile_image_from_auth(auth)
+    identity
   end
 
   # Find the configured provider for this identity
@@ -107,5 +115,29 @@ class OidcIdentity < ApplicationRecord
     return true if config.blank? || config[:issuer].blank? # No config to validate against
 
     issuer == config[:issuer]
+  end
+
+  def sync_profile_image_from_auth(auth)
+    return if user.profile_image.attached?
+
+    image_url = auth.info&.image.presence || auth.extra&.raw_info&.picture.presence || auth.extra&.raw_info&.[]("picture")
+    return if image_url.blank?
+
+    uri = URI.parse(image_url)
+    return unless uri.is_a?(URI::HTTP)
+
+    response = Net::HTTP.get_response(uri)
+    return unless response.is_a?(Net::HTTPSuccess)
+
+    content_type = response["Content-Type"]&.split(";")&.first
+    return unless content_type.in?(%w[image/jpeg image/png])
+
+    user.profile_image.attach(
+      io: StringIO.new(response.body),
+      filename: "#{provider}-avatar-#{uid}.#{content_type == 'image/png' ? 'png' : 'jpg'}",
+      content_type: content_type
+    )
+  rescue StandardError => error
+    Rails.logger.warn("[SSO] Could not sync profile image for oidc_identity=#{id}: #{error.class} #{error.message}")
   end
 end
