@@ -55,24 +55,24 @@ class LoginActivity < ApplicationRecord
 
   private
 
-  # Extract country from IP address using geocoder
-  def self.country_from_ip(ip_address)
-    return nil if ip_address.blank? || ip_address == "127.0.0.1" || ip_address.start_with?("192.168.") || ip_address.start_with?("10.")
+    # Extract country from IP address using geocoder
+    def self.country_from_ip(ip_address)
+      return nil if ip_address.blank? || ip_address == "127.0.0.1" || ip_address.start_with?("192.168.") || ip_address.start_with?("10.")
 
-    result = Geocoder.search(ip_address).first
-    result&.country
-  rescue StandardError => e
-    Rails.logger.warn("Failed to geocode IP #{ip_address}: #{e.message}")
-    nil
-  end
+      result = Geocoder.search(ip_address).first
+      result&.country
+    rescue StandardError => e
+      Rails.logger.warn("Failed to geocode IP #{ip_address}: #{e.message}")
+      nil
+    end
 
-  def self.city_from_ip(ip_address)
-    return nil if ip_address.blank? || ip_address == "127.0.0.1" || ip_address.start_with?("192.168.") || ip_address.start_with?("10.")
+    def self.city_from_ip(ip_address)
+      return nil if ip_address.blank? || ip_address == "127.0.0.1" || ip_address.start_with?("192.168.") || ip_address.start_with?("10.")
 
-    result = Geocoder.search(ip_address).first
-    result&.city
-  rescue StandardError => e
-    Rails.logger.warn("Failed to geocode IP #{ip_address}: #{e.message}")
-    nil
-  end
+      result = Geocoder.search(ip_address).first
+      result&.city
+    rescue StandardError => e
+      Rails.logger.warn("Failed to geocode IP #{ip_address}: #{e.message}")
+      nil
+    end
 end
