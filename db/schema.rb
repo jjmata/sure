@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_02_11_120001) do
+ActiveRecord::Schema[7.2].define(version: 2026_02_12_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -782,6 +782,19 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_11_120001) do
     t.string "subtype"
   end
 
+  create_table "login_activities", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "user_id", null: false
+    t.string "ip_address"
+    t.string "user_agent"
+    t.string "country"
+    t.string "city"
+    t.boolean "unusual", default: false, null: false
+    t.datetime "created_at", null: false
+    t.index ["user_id", "created_at"], name: "index_login_activities_on_user_id_and_created_at"
+    t.index ["user_id", "unusual"], name: "index_login_activities_on_user_id_and_unusual"
+    t.index ["user_id"], name: "index_login_activities_on_user_id"
+  end
+
   create_table "lunchflow_accounts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "lunchflow_item_id", null: false
     t.string "name"
@@ -1531,6 +1544,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_11_120001) do
   add_foreign_key "invitations", "families"
   add_foreign_key "invitations", "users", column: "inviter_id"
   add_foreign_key "llm_usages", "families"
+  add_foreign_key "login_activities", "users"
   add_foreign_key "lunchflow_accounts", "lunchflow_items"
   add_foreign_key "lunchflow_items", "families"
   add_foreign_key "merchants", "families"

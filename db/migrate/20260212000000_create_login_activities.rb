@@ -1,4 +1,4 @@
-class CreateLoginActivities < ActiveRecord::Migration[8.0]
+class CreateLoginActivities < ActiveRecord::Migration[7.2]
   def change
     create_table :login_activities, id: :uuid do |t|
       t.references :user, null: false, foreign_key: true, type: :uuid
@@ -11,7 +11,7 @@ class CreateLoginActivities < ActiveRecord::Migration[8.0]
       t.datetime :created_at, null: false
     end
 
-    add_index :login_activities, [:user_id, :created_at]
-    add_index :login_activities, [:user_id, :unusual]
+    add_index :login_activities, [ :user_id, :created_at ]
+    add_index :login_activities, [ :user_id, :unusual ]
   end
 end
